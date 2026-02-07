@@ -2,47 +2,176 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X O Gemegame - Online Real</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>X O Game Online - Mobile & Top 100</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        /* CSS เดิม ปรับปรุงให้สวยขึ้น */
-        :root { --primary: #ff0055; --secondary: #00d2ff; --bg: #1a1a2e; }
+        :root { --primary: #ff0055; --secondary: #00d2ff; --bg: #1a1a2e; --glass: rgba(255, 255, 255, 0.1); }
+        
         body {
             font-family: 'Kanit', sans-serif;
-            margin: 0; background: url('https://images.unsplash.com/photo-1614726365723-49cfae967d68?q=80&w=2000') center/cover fixed;
-            color: white; height: 100vh; overflow: hidden;
+            margin: 0; 
+            background: url('https://images.unsplash.com/photo-1614726365723-49cfae967d68?q=80&w=2000') center/cover fixed;
+            color: white; 
+            height: 100vh; 
+            overflow: hidden; /* ห้ามเลื่อนหน้าจอหลัก */
+            touch-action: manipulation; /* ลดดีเลย์การกดบนมือถือ */
         }
+
         .overlay { position: fixed; inset: 0; background: rgba(15, 15, 25, 0.9); z-index: -1; }
-        .screen { display: none; height: 100vh; flex-direction: column; align-items: center; justify-content: center; animation: fade 0.5s; }
+        
+        /* Screen Management */
+        .screen { 
+            display: none; 
+            height: 100%; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            overflow-y: auto; /* ให้เลื่อนได้ถ้าเนื้อหาเยอะ */
+            padding: 20px;
+            box-sizing: border-box;
+            animation: fade 0.3s;
+        }
         .active { display: flex; }
         @keyframes fade { from {opacity:0} to {opacity:1} }
 
-        /* UI Elements */
-        .btn { padding: 15px 30px; font-size: 20px; border: none; border-radius: 50px; cursor: pointer; transition: 0.3s; font-weight: bold; margin: 10px; }
-        .btn-p { background: var(--primary); color: white; box-shadow: 0 5px 15px rgba(255,0,85,0.4); }
-        .btn-s { background: var(--secondary); color: white; box-shadow: 0 5px 15px rgba(0,210,255,0.4); }
-        .btn:hover { transform: scale(1.05); }
-        
-        /* Navbar */
-        .navbar { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; box-sizing: border-box; }
-        .profile { display: flex; align-items: center; gap: 10px; }
-        .profile img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid white; }
-        .stats { display: flex; gap: 15px; background: rgba(0,0,0,0.6); padding: 8px 20px; border-radius: 20px; }
+        /* UI Components */
+        .btn { 
+            padding: 12px 25px; 
+            font-size: 18px; 
+            border: none; 
+            border-radius: 50px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            font-weight: bold; 
+            margin: 8px; 
+            width: 80%; /* มือถือปุ่มกว้างหน่อย */
+            max-width: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-p { background: linear-gradient(45deg, var(--primary), #ff5e00); color: white; box-shadow: 0 5px 15px rgba(255,0,85,0.4); }
+        .btn-s { background: linear-gradient(45deg, var(--secondary), #0066ff); color: white; box-shadow: 0 5px 15px rgba(0,210,255,0.4); }
+        .btn-gold { background: linear-gradient(45deg, #ffd700, #ffaa00); color: #000; box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4); }
+        .btn:active { transform: scale(0.95); }
 
-        /* Board */
-        .board { display: grid; grid-template-columns: repeat(3, 100px); gap: 10px; margin-top: 20px; }
-        .cell { width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 50px; cursor: pointer; }
+        /* Navbar */
+        .navbar { 
+            position: absolute; 
+            top: 0; 
+            width: 100%; 
+            padding: 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-sizing: border-box; 
+            z-index: 10;
+        }
+        .profile { display: flex; align-items: center; gap: 10px; }
+        .profile img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
+        .stats { 
+            display: flex; gap: 10px; 
+            background: rgba(0,0,0,0.6); 
+            padding: 5px 15px; 
+            border-radius: 20px; 
+            font-size: 14px;
+        }
+
+        /* Game Board (Responsive) */
+        .board { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; 
+            width: 100%; 
+            max-width: 350px; /* ไม่ให้ใหญ่เกินไปในคอม */
+            aspect-ratio: 1/1; /* ให้เป็นสี่เหลี่ยมจัตุรัสเสมอ */
+            margin: 20px auto;
+        }
+        .cell { 
+            background: var(--glass); 
+            border-radius: 15px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: clamp(40px, 10vw, 60px); /* ปรับขนาดฟอนต์ตามจอ */
+            cursor: pointer; 
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.05);
+        }
         .cell.x { color: var(--primary); text-shadow: 0 0 10px var(--primary); }
         .cell.o { color: var(--secondary); text-shadow: 0 0 10px var(--secondary); }
 
-        /* Lobby */
-        .lobby-box { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; backdrop-filter: blur(10px); display: flex; width: 80%; max-width: 800px; }
-        .lobby-side { flex: 1; text-align: center; padding: 20px; }
-        .vs-text { font-size: 40px; font-weight: bold; align-self: center; }
-        input { padding: 10px; border-radius: 5px; border: none; font-size: 16px; text-align: center; }
+        /* Lobby & Inputs */
+        .lobby-box { 
+            background: var(--glass); 
+            padding: 20px; 
+            border-radius: 20px; 
+            backdrop-filter: blur(10px); 
+            width: 90%; 
+            max-width: 600px;
+            display: flex; 
+            flex-direction: row; /* ปกติเรียงแนวนอน */
+            justify-content: space-around;
+            align-items: center;
+        }
+        input { 
+            padding: 12px; 
+            border-radius: 10px; 
+            border: none; 
+            font-size: 16px; 
+            text-align: center; 
+            width: 70%; 
+            max-width: 200px; 
+            margin-bottom: 10px;
+        }
+
+        /* --- Top 100 UI --- */
+        .leaderboard-container {
+            width: 95%;
+            max-width: 500px;
+            height: 60vh;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            overflow-y: auto; /* เลื่อนขึ้นลงได้ */
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .rank-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 8px;
+            padding: 10px;
+            border-radius: 10px;
+            transition: 0.2s;
+        }
+        .rank-item:hover { background: rgba(255,255,255,0.2); }
+        
+        .rank-num { font-size: 20px; font-weight: bold; width: 40px; text-align: center; color: gold; }
+        .rank-img { width: 40px; height: 40px; border-radius: 50%; margin: 0 15px; border: 2px solid #fff; }
+        .rank-name { flex-grow: 1; text-align: left; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .rank-score { font-weight: bold; color: var(--secondary); display: flex; align-items: center; gap: 5px; }
+
+        /* --- Mobile Responsive Rules --- */
+        @media (max-width: 600px) {
+            h1 { font-size: 40px !important; }
+            .lobby-box { flex-direction: column; gap: 20px; } /* Lobby เรียงแนวตั้งบนมือถือ */
+            .vs-text { margin: 10px 0; transform: rotate(90deg); }
+            .navbar { padding: 10px; }
+            .profile img { width: 35px; height: 35px; }
+            .stats { padding: 5px 10px; font-size: 12px; }
+            
+            /* ปรับปุ่มเมนูให้เรียงสวยบนมือถือ */
+            #menu-buttons { display: flex; flex-direction: column; width: 100%; align-items: center; }
+        }
+
+        /* Scrollbar สวยๆ */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -50,7 +179,7 @@
 <div class="overlay"></div>
 
 <div id="screen-login" class="screen active">
-    <h1>X O Game Online</h1>
+    <h1 style="font-size: 50px; text-shadow: 0 0 10px var(--primary);">X O Online</h1>
     <button class="btn" style="background: white; color: #444;" onclick="loginGoogle()">
         <i class="fab fa-google"></i> Login with Google
     </button>
@@ -60,70 +189,92 @@
     <div class="navbar">
         <div class="profile">
             <img id="user-img" src="">
-            <span id="user-name">Loading...</span>
+            <div style="display:flex; flex-direction:column; align-items:flex-start;">
+                <span id="user-name" style="font-weight:bold; font-size: 14px;">Loading...</span>
+            </div>
         </div>
         <div class="stats">
             <span>🪙 <b id="ui-coins">0</b></span>
             <span>⭐ <b id="ui-stars">0</b></span>
         </div>
     </div>
-    <h1 style="font-size: 60px; text-shadow: 0 0 20px var(--primary);">X O Gemegame</h1>
-    <div>
-        <button class="btn btn-p" onclick="startBotGame()">🤖 เล่นกับบอท</button>
-        <button class="btn btn-s" onclick="showLobbyInput()">👥 เล่นกับเพื่อน</button>
+
+    <h1 style="font-size: 60px; text-shadow: 0 0 20px var(--primary); margin-top: 50px;">X O Game</h1>
+    
+    <div id="menu-buttons">
+        <button class="btn btn-p" onclick="startBotGame()">
+            <i class="fas fa-robot"></i> เล่นกับบอท
+        </button>
+        <button class="btn btn-s" onclick="showLobbyInput()">
+            <i class="fas fa-user-friends"></i> เล่นกับเพื่อน
+        </button>
+        <button class="btn btn-gold" onclick="showTop100()">
+            <i class="fas fa-trophy"></i> Top 100 Rank
+        </button>
     </div>
     
-    <div id="join-section" style="margin-top: 20px; display:none;">
-        <input type="text" id="room-id-input" placeholder="ใส่เลขห้องเพื่อน" maxlength="6">
-        <button class="btn btn-s" style="padding: 10px 20px;" onclick="joinRoom()">เข้าร่วม</button>
-        <br><br>
+    <div id="join-section" style="margin-top: 20px; display:none; text-align:center; width: 100%;">
+        <input type="text" id="room-id-input" placeholder="ใส่เลขห้องเพื่อน (6 หลัก)" maxlength="6" inputmode="numeric">
+        <div style="display:flex; justify-content:center; gap:10px;">
+            <button class="btn btn-s" style="width: auto;" onclick="joinRoom()">เข้าร่วม</button>
+            <button class="btn" style="width: auto; background: #555;" onclick="closeJoinSection()">ยกเลิก</button>
+        </div>
+        <div style="margin-top:10px; color:#aaa;">- หรือ -</div>
         <button class="btn btn-p" onclick="createRoom()">+ สร้างห้องใหม่</button>
     </div>
 </div>
 
+<div id="screen-top100" class="screen">
+    <h2 style="font-size: 30px; color: gold; margin-bottom: 10px;">🏆 Top 100 Players</h2>
+    <div class="leaderboard-container" id="leaderboard-list">
+        <p style="text-align:center; margin-top:20px;">กำลังโหลดข้อมูล...</p>
+    </div>
+    <button class="btn" style="background: #444; margin-top: 20px;" onclick="backToMenu()">
+        <i class="fas fa-arrow-left"></i> กลับเมนูหลัก
+    </button>
+</div>
+
 <div id="screen-lobby" class="screen">
-    <h2 id="lobby-room-id">ID: ------</h2>
+    <h2 id="lobby-room-id" style="font-size: 24px; background:white; color:black; padding:5px 15px; border-radius:10px;">ID: ------</h2>
     <div class="lobby-box">
-        <div class="lobby-side">
-            <img id="p1-img" src="" style="width:80px; height:80px; border-radius:50%;">
-            <h3 id="p1-name">Waiting...</h3>
+        <div style="text-align: center;">
+            <img id="p1-img" src="" style="width:70px; height:70px; border-radius:50%; border:3px solid var(--primary);">
+            <h3 id="p1-name" style="margin:5px 0;">Me</h3>
         </div>
-        <div class="vs-text">VS</div>
-        <div class="lobby-side">
-            <img id="p2-img" src="" style="width:80px; height:80px; border-radius:50%;">
-            <h3 id="p2-name">Waiting...</h3>
+        <div class="vs-text" style="font-size:30px; font-weight:bold; color:#aaa;">VS</div>
+        <div style="text-align: center;">
+            <img id="p2-img" src="" style="width:70px; height:70px; border-radius:50%; border:3px solid var(--secondary);">
+            <h3 id="p2-name" style="margin:5px 0;">Waiting...</h3>
         </div>
     </div>
-    <p id="lobby-status">รอเพื่อนเข้าร่วม...</p>
-    <button id="btn-start-friend" class="btn btn-p" style="display:none;" onclick="startGameFriend()">เริ่มเกม</button>
-    <button class="btn" onclick="leaveRoom()">ออก</button>
+    <p id="lobby-status" style="margin-top:20px;">แชร์ ID ให้เพื่อนเพื่อเริ่มเกม</p>
+    
+    <button id="btn-start-friend" class="btn btn-p" style="display:none;" onclick="startGameFriend()">เริ่มเกมเลย!</button>
+    <button class="btn" onclick="leaveRoom()" style="background:none; border:1px solid #fff;">ออก</button>
 </div>
 
 <div id="screen-game" class="screen">
     <div class="navbar">
-        <div class="profile">
-            <span id="game-p1-score">Me (X): 0</span>
-        </div>
-        <div style="font-size: 24px;">รอบที่ <span id="round-count">1</span></div>
-        <div class="profile">
-            <span id="game-p2-score">Opponent (O): 0</span>
-        </div>
+        <div style="font-size: 14px;">Me: <b id="game-p1-score">0</b></div>
+        <div style="font-size: 18px; font-weight:bold; color:gold;">รอบที่ <span id="round-count">1</span></div>
+        <div style="font-size: 14px;">Op: <b id="game-p2-score">0</b></div>
     </div>
     
-    <div id="turn-indicator" style="margin-top: 60px; font-size: 24px;">ตาของ: X</div>
+    <div id="turn-indicator" style="margin-top: 60px; font-size: 20px; font-weight:bold;">ตาของ: X</div>
     
     <div class="board" id="board">
         </div>
-    <button class="btn" style="margin-top: 20px; background: #444;" onclick="backToMenu()">ยอมแพ้ / ออก</button>
+    
+    <button class="btn" style="margin-top: 10px; background: #333; font-size:16px; width:auto;" onclick="backToMenu()">ยอมแพ้ / ออก</button>
 </div>
 
 <script type="module">
     // ------------------------------------------------------------------
-    // 1. SETUP FIREBASE (ต้องแก้ตรงนี้!)
+    // 1. SETUP FIREBASE (ใส่ Config ของคุณตรงนี้)
     // ------------------------------------------------------------------
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-    import { getDatabase, ref, set, onValue, update, get, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update, get, remove, onDisconnect, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
     const firebaseConfig = {
   apiKey: "AIzaSyCwXPZCxFv2sUXV5QenHvEWQpNUg4yf3FU",
@@ -140,7 +291,6 @@
     const db = getDatabase(app);
     const provider = new GoogleAuthProvider();
 
-    // ตัวแปร Global
     let currentUser = null;
     let currentRoomId = null;
     let mySymbol = 'X';
@@ -150,57 +300,99 @@
     let scores = { x: 0, o: 0 };
     let gameActive = false;
 
-    // ------------------------------------------------------------------
-    // 2. AUTHENTICATION & DATA
-    // ------------------------------------------------------------------
+    // --- Authentication ---
     window.loginGoogle = () => {
-        signInWithPopup(auth, provider).catch(console.error);
+        signInWithPopup(auth, provider).catch((error) => {
+            alert("Login Error: " + error.message);
+        });
     };
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUser = user;
-            // เช็คว่ามีข้อมูลใน Database ยัง ถ้าไม่มีให้สร้าง
             const userRef = ref(db, 'users/' + user.uid);
+            // อัปเดตข้อมูลผู้ใช้ล่าสุดทุกครั้งที่เข้า
             get(userRef).then((snapshot) => {
-                if (!snapshot.exists()) {
-                    set(userRef, {
-                        name: user.displayName,
-                        photo: user.photoURL,
-                        coins: 100,
-                        stars: 0
-                    });
-                }
+                const existingData = snapshot.val() || {};
+                update(userRef, {
+                    name: user.displayName,
+                    photo: user.photoURL,
+                    coins: existingData.coins || 100, // ถ้ามีอยู่แล้วไม่แก้
+                    stars: existingData.stars || 0    // ถ้ามีอยู่แล้วไม่แก้
+                });
             });
-            
-            // Sync ข้อมูล Coins/Stars ตลอดเวลา
+
             onValue(userRef, (snapshot) => {
                 const data = snapshot.val();
                 if(data) {
-                    document.getElementById('user-name').innerText = data.name;
+                    document.getElementById('user-name').innerText = data.name.split(' ')[0]; // เอาแค่ชื่อแรก
                     document.getElementById('user-img').src = data.photo;
                     document.getElementById('ui-coins').innerText = data.coins;
                     document.getElementById('ui-stars').innerText = data.stars;
                 }
             });
-
             switchScreen('screen-menu');
         } else {
             switchScreen('screen-login');
         }
     });
 
-    // ------------------------------------------------------------------
-    // 3. MULTIPLAYER ROOM SYSTEM
-    // ------------------------------------------------------------------
+    // --- Top 100 Logic (New Feature) ---
+    window.showTop100 = () => {
+        switchScreen('screen-top100');
+        const listContainer = document.getElementById('leaderboard-list');
+        listContainer.innerHTML = '<p style="text-align:center; margin-top:20px;">กำลังโหลด...</p>';
+
+        // Query: เรียงตาม stars, เอา 100 คนท้ายสุด (เพราะ Firebase เรียงน้อยไปมาก)
+        const topPlayersQuery = query(ref(db, 'users'), orderByChild('stars'), limitToLast(100));
+
+        // ใช้ onValue เพื่อ Realtime (ถ้ามีคนแซงจะเห็นทันที)
+        onValue(topPlayersQuery, (snapshot) => {
+            listContainer.innerHTML = '';
+            const players = [];
+            
+            snapshot.forEach((childSnapshot) => {
+                players.push(childSnapshot.val());
+            });
+
+            // Firebase ส่งมาแบบ น้อย->มาก เราต้องกลับด้านเป็น มาก->น้อย
+            players.reverse();
+
+            if (players.length === 0) {
+                listContainer.innerHTML = '<p style="text-align:center;">ยังไม่มีข้อมูลผู้เล่น</p>';
+                return;
+            }
+
+            players.forEach((player, index) => {
+                const rank = index + 1;
+                // สร้าง UI สำหรับแต่ละคน
+                const div = document.createElement('div');
+                div.className = 'rank-item';
+                div.innerHTML = `
+                    <div class="rank-num">${rank}</div>
+                    <img src="${player.photo || 'https://via.placeholder.com/40'}" class="rank-img">
+                    <div class="rank-name">${player.name || 'Unknown'}</div>
+                    <div class="rank-score"><i class="fas fa-star" style="font-size:12px;"></i> ${player.stars || 0}</div>
+                `;
+                listContainer.appendChild(div);
+            });
+        });
+    }
+
+    // --- Multiplayer Room ---
     window.showLobbyInput = () => {
         document.getElementById('join-section').style.display = 'block';
+        document.getElementById('menu-buttons').style.display = 'none'; // ซ่อนปุ่มเมนูชั่วคราว
+    }
+    
+    window.closeJoinSection = () => {
+        document.getElementById('join-section').style.display = 'none';
+        document.getElementById('menu-buttons').style.display = 'flex';
     }
 
     window.createRoom = () => {
         const roomId = Math.floor(100000 + Math.random() * 900000).toString();
         const roomRef = ref(db, 'rooms/' + roomId);
-        
         set(roomRef, {
             p1: { uid: currentUser.uid, name: currentUser.displayName, photo: currentUser.photoURL },
             status: 'waiting',
@@ -209,32 +401,24 @@
             round: 1,
             scores: { x: 0, o: 0 }
         });
-
-        // ถ้าเราหลุด ให้ลบห้อง (กันห้องค้าง)
         onDisconnect(roomRef).remove();
-        
         enterLobby(roomId, 'owner');
     }
 
     window.joinRoom = () => {
         const roomId = document.getElementById('room-id-input').value;
-        if (roomId.length !== 6) return alert("กรุณาใส่รหัส 6 หลัก");
-
+        if (roomId.length !== 6) return alert("ใส่รหัส 6 หลักครับ");
+        
         const roomRef = ref(db, 'rooms/' + roomId);
         get(roomRef).then((snapshot) => {
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                if (data.status === 'waiting') {
-                    update(roomRef, {
-                        p2: { uid: currentUser.uid, name: currentUser.displayName, photo: currentUser.photoURL },
-                        status: 'ready'
-                    });
-                    enterLobby(roomId, 'guest');
-                } else {
-                    alert("ห้องเต็มหรือกำลังเล่นอยู่");
-                }
+            if (snapshot.exists() && snapshot.val().status === 'waiting') {
+                update(roomRef, {
+                    p2: { uid: currentUser.uid, name: currentUser.displayName, photo: currentUser.photoURL },
+                    status: 'ready'
+                });
+                enterLobby(roomId, 'guest');
             } else {
-                alert("ไม่พบห้องนี้");
+                alert("ห้องเต็มหรือไม่มีอยู่จริง");
             }
         });
     }
@@ -244,39 +428,29 @@
         switchScreen('screen-lobby');
         document.getElementById('lobby-room-id').innerText = "ID: " + roomId;
         
-        const roomRef = ref(db, 'rooms/' + roomId);
-        
-        // ฟังการเปลี่ยนแปลงในห้อง (Realtime!)
-        onValue(roomRef, (snapshot) => {
+        onValue(ref(db, 'rooms/' + roomId), (snapshot) => {
             const data = snapshot.val();
-            if (!data) return; // ห้องถูกลบ
+            if (!data) return backToMenu(); // ห้องหาย
 
-            // Update Lobby UI
             if (data.p1) {
-                document.getElementById('p1-name').innerText = data.p1.name;
+                document.getElementById('p1-name').innerText = data.p1.name.split(' ')[0];
                 document.getElementById('p1-img').src = data.p1.photo;
             }
             if (data.p2) {
-                document.getElementById('p2-name').innerText = data.p2.name;
+                document.getElementById('p2-name').innerText = data.p2.name.split(' ')[0];
                 document.getElementById('p2-img').src = data.p2.photo;
                 document.getElementById('lobby-status').innerText = "พร้อมแล้ว!";
-                
-                // ถ้าเราเป็นเจ้าของห้อง ปุ่มเริ่มจะโผล่
                 if (role === 'owner' && data.status === 'ready') {
                     document.getElementById('btn-start-friend').style.display = 'inline-block';
                 }
             } else {
-                 document.getElementById('p2-name').innerText = "รอเพื่อน...";
-                 document.getElementById('p2-img').src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                document.getElementById('p2-name').innerText = "รอเพื่อน...";
+                document.getElementById('p2-img').src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                document.getElementById('lobby-status').innerText = "แชร์ ID: " + roomId + " ให้เพื่อน";
             }
 
-            // ถ้าสถานะเป็น playing ให้เข้าเกม
             if (data.status === 'playing') {
-                startGameUI(data, role === 'owner' ? 'X' : 'O'); // เจ้าของเป็น X เสมอ (ง่ายต่อการเขียน)
-            }
-            
-            // Sync Game Board (ขณะเล่น)
-            if (data.status === 'playing') {
+                startGameUI(data, role === 'owner' ? 'X' : 'O');
                 updateBoardUI(data.board, data.turn, data.scores, data.round);
             }
         });
@@ -286,9 +460,7 @@
         update(ref(db, 'rooms/' + currentRoomId), { status: 'playing' });
     }
 
-    // ------------------------------------------------------------------
-    // 4. GAMEPLAY LOGIC (Online & Bot)
-    // ------------------------------------------------------------------
+    // --- Game Logic ---
     function startGameUI(roomData, symbol) {
         switchScreen('screen-game');
         mySymbol = symbol;
@@ -296,15 +468,13 @@
         createBoard();
     }
     
-    // สำหรับ Bot Mode (Local Logic)
     window.startBotGame = () => {
         isBotMode = true;
-        mySymbol = 'X'; // คนเล่นเป็น X ก่อนเสมอในโหมดบอทแบบง่าย
+        mySymbol = 'X';
         boardState = Array(9).fill("");
         round = 1;
         scores = { x: 0, o: 0 };
         gameActive = true;
-        
         switchScreen('screen-game');
         createBoard();
         updateBoardUI(boardState, 'X', scores, round);
@@ -317,20 +487,19 @@
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.dataset.index = i;
+            // ใส่ Touch event เพื่อให้ลื่นขึ้นบนมือถือ
             cell.onclick = () => handleCellClick(i);
             board.appendChild(cell);
         }
     }
 
     function handleCellClick(index) {
-        // ตรวจสอบว่ากดได้ไหม
         if (isBotMode) {
-            if (!gameActive || boardState[index] !== "" || mySymbol !== 'X') return; // X เริ่มก่อน
+            if (!gameActive || boardState[index] !== "" || mySymbol !== 'X') return;
             makeMoveLocal(index, 'X');
             if (gameActive) setTimeout(botMove, 500);
         } else {
-            // Online Mode
-            // ดึงสถานะปัจจุบันมาเช็คก่อน (จริงๆ ควรเช็คจาก snapshot ล่าสุด)
+             // Online Logic (เหมือนเดิม)
              get(ref(db, 'rooms/' + currentRoomId)).then((snap) => {
                  const data = snap.val();
                  if (data.board[index] === "" && data.turn === mySymbol) {
@@ -338,35 +507,27 @@
                      newBoard[index] = mySymbol;
                      let nextTurn = mySymbol === 'X' ? 'O' : 'X';
                      
-                     // เช็คชนะในฝั่ง Server Logic (Client ส่งไปอัพเดท)
                      let winner = checkWin(newBoard);
                      let newScores = {...data.scores};
                      let newRound = data.round;
                      let resetBoard = false;
 
                      if (winner) {
-                         // มีคนชนะรอบนี้
-                         if(winner === 'X') newScores.x++;
-                         else newScores.o++;
-                         
+                         winner === 'X' ? newScores.x++ : newScores.o++;
                          if(newScores.x >= 3 || newScores.o >= 3) {
-                             // จบเกมใหญ่ (Match Over)
                              endMatchOnline(winner === mySymbol);
                              return;
-                         } else {
-                             // จบรอบย่อย
-                             newRound++;
-                             resetBoard = true;
                          }
+                         newRound++;
+                         resetBoard = true;
                      } else if (!newBoard.includes("")) {
-                         // เสมอ
                          newRound++;
                          resetBoard = true;
                      }
 
                      update(ref(db, 'rooms/' + currentRoomId), {
                          board: resetBoard ? Array(9).fill("") : newBoard,
-                         turn: nextTurn, // คนชนะเริ่ม หรือสลับกัน (อันนี้สลับ)
+                         turn: nextTurn,
                          scores: newScores,
                          round: newRound
                      });
@@ -375,55 +536,52 @@
         }
     }
 
-    // --- Update UI from State ---
     function updateBoardUI(board, turn, currentScores, currentRound) {
         const cells = document.querySelectorAll('.cell');
         board.forEach((val, idx) => {
             cells[idx].className = `cell ${val ? val.toLowerCase() : ''}`;
             cells[idx].innerText = val;
         });
-
         document.getElementById('turn-indicator').innerText = `ตาของ: ${turn}`;
         document.getElementById('round-count').innerText = currentRound;
-        document.getElementById('game-p1-score').innerText = `Me: ${isBotMode ? scores.x : (mySymbol=='X' ? currentScores.x : currentScores.o)}`;
-        document.getElementById('game-p2-score').innerText = `Opponent: ${isBotMode ? scores.o : (mySymbol=='X' ? currentScores.o : currentScores.x)}`;
+        
+        let p1S = mySymbol == 'X' ? currentScores.x : currentScores.o;
+        let p2S = mySymbol == 'X' ? currentScores.o : currentScores.x;
+        if(isBotMode) { p1S = scores.x; p2S = scores.o; }
+
+        document.getElementById('game-p1-score').innerText = p1S;
+        document.getElementById('game-p2-score').innerText = p2S;
     }
 
-    // --- Logic ภายใน (ใช้ทั้ง Bot และช่วยเช็ค Online) ---
+    // --- Helpers & Logic ---
     function checkWin(board) {
         const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-        for (let combo of wins) {
-            if (board[combo[0]] && board[combo[0]] === board[combo[1]] && board[combo[0]] === board[combo[2]]) {
-                return board[combo[0]];
-            }
-        }
+        for (let c of wins) if (board[c[0]] && board[c[0]] === board[c[1]] && board[c[0]] === board[c[2]]) return board[c[0]];
         return null;
     }
 
-    // --- Bot Logic ---
     function makeMoveLocal(index, symbol) {
         boardState[index] = symbol;
         let winner = checkWin(boardState);
-        
         if (winner) {
-            if (winner === 'X') scores.x++; else scores.o++;
-            checkMatchOver();
-            resetBoardLocal();
+            winner === 'X' ? scores.x++ : scores.o++;
+            if (scores.x >= 3 || scores.o >= 3) {
+                gameActive = false;
+                giveRewards(scores.x >= 3, 'bot');
+            } else {
+                resetBoardLocal();
+            }
         } else if (!boardState.includes("")) {
-            // Draw
             resetBoardLocal();
         } else {
-             updateBoardUI(boardState, symbol==='X'?'O':'X', scores, round);
+            updateBoardUI(boardState, symbol==='X'?'O':'X', scores, round);
         }
     }
 
     function botMove() {
         if(!gameActive) return;
-        let emptyIndices = boardState.map((v, i) => v === "" ? i : null).filter(v => v !== null);
-        if (emptyIndices.length > 0) {
-            let rand = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-            makeMoveLocal(rand, 'O');
-        }
+        let empty = boardState.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+        if (empty.length > 0) makeMoveLocal(empty[Math.floor(Math.random() * empty.length)], 'O');
     }
 
     function resetBoardLocal() {
@@ -432,51 +590,35 @@
         boardState.fill("");
         updateBoardUI(boardState, 'X', scores, round);
     }
-    
-    function checkMatchOver() {
-        if (scores.x >= 3 || scores.o >= 3) {
-            gameActive = false;
-            let isWin = scores.x >= 3;
-            // ให้รางวัล
-            giveRewards(isWin, 'bot');
-        }
-    }
 
     function endMatchOnline(isWin) {
-         // ในระบบจริงควรให้ Server function จัดการรางวัล แต่ทำแบบ Client-side ง่ายๆ
          giveRewards(isWin, 'friend');
-         // ลบห้อง
          if(currentRoomId) remove(ref(db, 'rooms/' + currentRoomId));
     }
 
-    // ------------------------------------------------------------------
-    // 5. REWARDS SYSTEM
-    // ------------------------------------------------------------------
     function giveRewards(isWin, mode) {
-        let coinReward = 0;
         let starReward = 0;
+        let coinReward = 0;
         let msg = "";
 
         if (mode === 'bot') {
-            if (isWin) { starReward = 2; msg = "ชนะบอท! ได้ 2 ดาว"; }
-            else { msg = "แพ้บอท ไม่ได้อะไรเลย"; }
+            if (isWin) { starReward = 2; msg = "ชนะบอท! ได้ 2 ดาว ⭐⭐"; }
+            else msg = "แพ้บอท!";
         } else {
-            if (isWin) { starReward = 2; coinReward = 50; msg = "ชนะเพื่อน! ได้ 2 ดาว 50 Coins"; }
-            else { starReward = 1; coinReward = 10; msg = "แพ้เพื่อน! รางวัลปลอบใจ 1 ดาว 10 Coins"; }
+            if (isWin) { starReward = 2; coinReward = 50; msg = "ชนะ! ได้ 2 ดาว 50 Coins"; }
+            else { starReward = 1; coinReward = 10; msg = "แพ้! ได้ 1 ดาว 10 Coins"; }
         }
-
+        
         alert(msg);
-
-        // บันทึกเข้า Database
+        
         const userRef = ref(db, 'users/' + currentUser.uid);
         get(userRef).then(snap => {
             const data = snap.val();
             update(userRef, {
-                coins: data.coins + coinReward,
-                stars: data.stars + starReward
+                coins: (data.coins || 0) + coinReward,
+                stars: (data.stars || 0) + starReward
             });
         });
-
         backToMenu();
     }
 
@@ -484,18 +626,12 @@
         gameActive = false;
         currentRoomId = null;
         switchScreen('screen-menu');
-        // รีเซ็ตค่า UI
         document.getElementById('join-section').style.display = 'none';
-        document.getElementById('lobby-status').innerText = "รอเพื่อนเข้าร่วม...";
-        document.getElementById('p2-name').innerText = "Waiting...";
-        document.getElementById('p2-img').src = "";
+        document.getElementById('menu-buttons').style.display = 'flex'; // แสดงปุ่มเมนู
     }
     
     window.leaveRoom = () => {
-        if(currentRoomId) {
-            // ลบชื่อออกจากห้อง หรือลบห้อง
-             remove(ref(db, 'rooms/' + currentRoomId));
-        }
+        if(currentRoomId) remove(ref(db, 'rooms/' + currentRoomId));
         backToMenu();
     }
 
